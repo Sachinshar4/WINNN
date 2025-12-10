@@ -22,215 +22,355 @@ if ss is not None:
 	acc = Client("myacc" ,api_id=api_id, api_hash=api_hash, session_string=ss)
 	acc.start()
 else: acc = None
-sync def subscribe(app, message):
-            return 1 
-     
-@app.on_message(filters.command("set"))
-async def set(_, message):
-    if message.from_user.id not in OWNER_ID:
-        await message.reply("You are not authorized to use this command.")
-        return
-     
-    await app.set_bot_commands([
-        BotCommand("start", "🚀 Start the bot"),
-        BotCommand("batch", "🫠 Extract in bulk"),
-        BotCommand("login", "🔑 Get into the bot"),
-        BotCommand("setbot", "🧸 Add your bot for handling files"),
-        BotCommand("logout", "🚪 Get out of the bot"),
-        BotCommand("adl", "👻 Download audio from 30+ sites"),
-        BotCommand("dl", "💀 Download videos from 30+ sites"),
-        BotCommand("status", "⟳ Refresh Payment status"),
-        BotCommand("transfer", "💘 Gift premium to others"),
-        BotCommand("add", "➕ Add user to premium"),
-        BotCommand("rem", "➖ Remove from premium"),
-        BotCommand("rembot", "🤨 Remove your custom bot"),
-        BotCommand("settings", "⚙️ Personalize things"),
-        BotCommand("plan", "🗓️ Check our premium plans"),
-        BotCommand("terms", "🥺 Terms and conditions"),
-        BotCommand("help", "❓ If you're a noob, still!"),
-        BotCommand("cancel", "🚫 Cancel login/batch/settings process"),
-        BotCommand("stop", "🚫 Cancel batch process")
-    ])
- 
-    await message.reply("✅ Commands configured successfully!")
- 
- 
- 
- 
-help_pages = [
-    (
-        "📝 **Bot Commands Overview (1/2)**:\n\n"
-        "1. **/add userID**\n"
-        "> Add user to premium (Owner only)\n\n"
-        "2. **/rem userID**\n"
-        "> Remove user from premium (Owner only)\n\n"
-        "3. **/transfer userID**\n"
-        "> Transfer premium to your beloved major purpose for resellers (Premium members only)\n\n"
-        "4. **/get**\n"
-        "> Get all user IDs (Owner only)\n\n"
-        "5. **/lock**\n"
-        "> Lock channel from extraction (Owner only)\n\n"
-        "6. **/dl link**\n"
-        "> Download videos (Not available in v3 if you are using)\n\n"
-        "7. **/adl link**\n"
-        "> Download audio (Not available in v3 if you are using)\n\n"
-        "8. **/login**\n"
-        "> Log into the bot for private channel access\n\n"
-        "9. **/batch**\n"
-        "> Bulk extraction for posts (After login)\n\n"
-    ),
-    (
-        "📝 **Bot Commands Overview (2/2)**:\n\n"
-        "10. **/logout**\n"
-        "> Logout from the bot\n\n"
-        "11. **/stats**\n"
-        "> Get bot stats\n\n"
-        "12. **/plan**\n"
-        "> Check premium plans\n\n"
-        "13. **/speedtest**\n"
-        "> Test the server speed (not available in v3)\n\n"
-        "14. **/terms**\n"
-        "> Terms and conditions\n\n"
-        "15. **/cancel**\n"
-        "> Cancel ongoing batch process\n\n"
-        "16. **/myplan**\n"
-        "> Get details about your plans\n\n"
-        "17. **/session**\n"
-        "> Generate Pyrogram V2 session\n\n"
-        "18. **/settings**\n"
-        "> 1. SETCHATID : To directly upload in channel or group or user's dm use it with -100[chatID]\n"
-        "> 2. SETRENAME : To add custom rename tag or username of your channels\n"
-        "> 3. CAPTION : To add custom caption\n"
-        "> 4. REPLACEWORDS : Can be used for words in deleted set via REMOVE WORDS\n"
-        "> 5. RESET : To set the things back to default\n\n"
-        "> You can set CUSTOM THUMBNAIL, PDF WATERMARK, VIDEO WATERMARK, SESSION-based login, etc. from settings\n\n"
-        "**__Powered by Team SPY__**"
-    )
-]
- 
- 
-async def send_or_edit_help_page(_, message, page_number):
-    if page_number < 0 or page_number >= len(help_pages):
-        return
- 
-     
-    prev_button = InlineKeyboardButton("◀️ Previous", callback_data=f"help_prev_{page_number}")
-    next_button = InlineKeyboardButton("Next ▶️", callback_data=f"help_next_{page_number}")
- 
-     
-    buttons = []
-    if page_number > 0:
-        buttons.append(prev_button)
-    if page_number < len(help_pages) - 1:
-        buttons.append(next_button)
- 
-     
-    keyboard = InlineKeyboardMarkup([buttons])
- 
-     
-    await message.delete()
- 
-     
-    await message.reply(
-        help_pages[page_number],
-        reply_markup=keyboard
-    )
- 
- 
-@app.on_message(filters.command("help"))
-async def help(client, message):
-    join = await subscribe(client, message)
-    if join == 1:
-        return
-     
-    await send_or_edit_help_page(client, message, 0)
- 
- 
-@app.on_callback_query(filters.regex(r"help_(prev|next)_(\d+)"))
-async def on_help_navigation(client, callback_query):
-    action, page_number = callback_query.data.split("_")[1], int(callback_query.data.split("_")[2])
- 
-    if action == "prev":
-        page_number -= 1
-    elif action == "next":
-        page_number += 1
+class batch_temp(object):
+    IS_BATCH = {}
 
-    await send_or_edit_help_page(client, callback_query.message, page_number)
-     
-    await callback_query.answer()
+async def downstatus(client, statusfile, message, chat):
+    while True:
+        if os.path.exists(statusfile):
+            break
 
- 
-@app.on_message(filters.command("terms") & filters.private)
-async def terms(client, message):
-    terms_text = (
-        "> 📜 **Terms and Conditions** 📜\n\n"
-        "✨ We are not responsible for user deeds, and we do not promote copyrighted content. If any user engages in such activities, it is solely their responsibility.\n"
-        "✨ Upon purchase, we do not guarantee the uptime, downtime, or the validity of the plan. __Authorization and banning of users are at our discretion; we reserve the right to ban or authorize users at any time.__\n"
-        "✨ Payment to us **__does not guarantee__** authorization for the /batch command. All decisions regarding authorization are made at our discretion and mood.\n"
+        await asyncio.sleep(3)
+      
+    while os.path.exists(statusfile):
+        with open(statusfile, "r") as downread:
+            txt = downread.read()
+        try:
+            await client.edit_message_text(chat, message.id, f"**Downloaded:** **{txt}**")
+            await asyncio.sleep(10)
+        except:
+            await asyncio.sleep(5)
+
+
+# upload status
+async def upstatus(client, statusfile, message, chat):
+    while True:
+        if os.path.exists(statusfile):
+            break
+
+        await asyncio.sleep(3)      
+    while os.path.exists(statusfile):
+        with open(statusfile, "r") as upread:
+            txt = upread.read()
+        try:
+            await client.edit_message_text(chat, message.id, f"**Uploaded:** **{txt}**")
+            await asyncio.sleep(10)
+        except:
+            await asyncio.sleep(5)
+
+
+# progress writer
+def progress(current, total, message, type):
+    with open(f'{message.id}{type}status.txt', "w") as fileup:
+        fileup.write(f"{current * 100 / total:.1f}%")
+
+
+# start command
+@Client.on_message(filters.command(["start"]))
+async def send_start(client: Client, message: Message):
+    if not await db.is_user_exist(message.from_user.id):
+        await db.add_user(message.from_user.id, message.from_user.first_name)
+    buttons = [[
+        InlineKeyboardButton("❣️ Developer", url = "https://t.me/kingvj01")
+    ],[
+        InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion'),
+        InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/vj_bots')
+    ]]
+    reply_markup = InlineKeyboardMarkup(buttons)
+    await client.send_message(
+        chat_id=message.chat.id, 
+        text=f"<b>👋 Hi {message.from_user.mention}, I am Save Restricted Content Bot, I can send you restricted content by its post link.\n\nFor downloading restricted content /login first.\n\nKnow how to use bot by - /help</b>", 
+        reply_markup=reply_markup, 
+        reply_to_message_id=message.id
     )
-     
-    buttons = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📋 See Plans", callback_data="see_plan")],
-            [InlineKeyboardButton("💬 Contact Now", url="https://t.me/kingofpatal")],
-        ]
+    return
+
+
+# help command
+@Client.on_message(filters.command(["help"]))
+async def send_help(client: Client, message: Message):
+    await client.send_message(
+        chat_id=message.chat.id, 
+        text=f"{HELP_TXT}"
     )
-    await message.reply_text(terms_text, reply_markup=buttons)
- 
- 
-@app.on_message(filters.command("plan") & filters.private)
-async def plan(client, message):
-    plan_text = (
-        "> 💰 **Premium Price**:\n\n Starting from $2 or 200 INR accepted via **__Amazon Gift Card__** (terms and conditions apply).\n"
-        "📥 **Download Limit**: Users can download up to 100,000 files in a single batch command.\n"
-        "🛑 **Batch**: You will get two modes /bulk and /batch.\n"
-        "   - Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.\n\n"
-        "📜 **Terms and Conditions**: For further details and complete terms and conditions, please send /terms.\n"
+
+# cancel command
+@Client.on_message(filters.command(["cancel"]))
+async def send_cancel(client: Client, message: Message):
+    batch_temp.IS_BATCH[message.from_user.id] = True
+    await client.send_message(
+        chat_id=message.chat.id, 
+        text="**Batch Successfully Cancelled.**"
     )
-     
-    buttons = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📜 See Terms", callback_data="see_terms")],
-            [InlineKeyboardButton("💬 Contact Now", url="https://t.me/kingofpatal")],
-        ]
-    )
-    await message.reply_text(plan_text, reply_markup=buttons)
- 
- 
-@app.on_callback_query(filters.regex("see_plan"))
-async def see_plan(client, callback_query):
-    plan_text = (
-        "> 💰**Premium Price**\n\n Starting from $2 or 200 INR accepted via **__Amazon Gift Card__** (terms and conditions apply).\n"
-        "📥 **Download Limit**: Users can download up to 100,000 files in a single batch command.\n"
-        "🛑 **Batch**: You will get two modes /bulk and /batch.\n"
-        "   - Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.\n\n"
-        "📜 **Terms and Conditions**: For further details and complete terms and conditions, please send /terms or click See Terms👇\n"
-    )
-     
-    buttons = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📜 See Terms", callback_data="see_terms")],
-            [InlineKeyboardButton("💬 Contact Now", url="https://t.me/kingofpatal")],
-        ]
-    )
-    await callback_query.message.edit_text(plan_text, reply_markup=buttons)
- 
- 
-@app.on_callback_query(filters.regex("see_terms"))
-async def see_terms(client, callback_query):
-    terms_text = (
-        "> 📜 **Terms and Conditions** 📜\n\n"
-        "✨ We are not responsible for user deeds, and we do not promote copyrighted content. If any user engages in such activities, it is solely their responsibility.\n"
-        "✨ Upon purchase, we do not guarantee the uptime, downtime, or the validity of the plan. __Authorization and banning of users are at our discretion; we reserve the right to ban or authorize users at any time.__\n"
-        "✨ Payment to us **__does not guarantee__** authorization for the /batch command. All decisions regarding authorization are made at our discretion and mood.\n"
-    )
-     
-    buttons = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📋 See Plans", callback_data="see_plan")],
-            [InlineKeyboardButton("💬 Contact Now", url="https://t.me/kingofpatal")],
-        ]
-    )
-    await callback_query.message.edit_text(terms_text, reply_markup=buttons)
+
+@Client.on_message(filters.text & filters.private)
+async def save(client: Client, message: Message):
+    # Joining chat
+    if ("https://t.me/+" in message.text or "https://t.me/joinchat/" in message.text) and LOGIN_SYSTEM == False:
+        if TechVJUser is None:
+            await client.send_message(message.chat.id, "String Session is not Set", reply_to_message_id=message.id)
+            return
+        try:
+            try:
+                await TechVJUser.join_chat(message.text)
+            except Exception as e: 
+                await client.send_message(message.chat.id, f"Error : {e}", reply_to_message_id=message.id)
+                return
+            await client.send_message(message.chat.id, "Chat Joined", reply_to_message_id=message.id)
+        except UserAlreadyParticipant:
+            await client.send_message(message.chat.id, "Chat already Joined", reply_to_message_id=message.id)
+        except InviteHashExpired:
+            await client.send_message(message.chat.id, "Invalid Link", reply_to_message_id=message.id)
+        return
+    
+    if "https://t.me/" in message.text:
+        if batch_temp.IS_BATCH.get(message.from_user.id) == False:
+            return await message.reply_text("**One Task Is Already Processing. Wait For Complete It. If You Want To Cancel This Task Then Use - /cancel**")
+        datas = message.text.split("/")
+        temp = datas[-1].replace("?single","").split("-")
+        fromID = int(temp[0].strip())
+        try:
+            toID = int(temp[1].strip())
+        except:
+            toID = fromID
+
+        if LOGIN_SYSTEM == True:
+            user_data = await db.get_session(message.from_user.id)
+            if user_data is None:
+                await message.reply("**For Downloading Restricted Content You Have To /login First.**")
+                return
+            api_id = int(await db.get_api_id(message.from_user.id))
+            api_hash = await db.get_api_hash(message.from_user.id)
+            try:
+                acc = Client("saverestricted", session_string=user_data, api_hash=api_hash, api_id=api_id)
+                await acc.connect()
+            except:
+                return await message.reply("**Your Login Session Expired. So /logout First Then Login Again By - /login**")
+        else:
+            if TechVJUser is None:
+                await client.send_message(message.chat.id, f"**String Session is not Set**", reply_to_message_id=message.id)
+                return
+            acc = TechVJUser
+				
+        batch_temp.IS_BATCH[message.from_user.id] = False
+        for msgid in range(fromID, toID+1):
+            if batch_temp.IS_BATCH.get(message.from_user.id): break
+            
+            # private
+            if "https://t.me/c/" in message.text:
+                chatid = int("-100" + datas[4])
+                try:
+                    await handle_private(client, acc, message, chatid, msgid)
+                except Exception as e:
+                    if ERROR_MESSAGE == True:
+                        await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id)
+    
+            # bot
+            elif "https://t.me/b/" in message.text:
+                username = datas[4]
+                try:
+                    await handle_private(client, acc, message, username, msgid)
+                except Exception as e:
+                    if ERROR_MESSAGE == True:
+                        await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id)
+            
+            # public
+            else:
+                username = datas[3]
+
+                try:
+                    msg = await client.get_messages(username, msgid)
+                except UsernameNotOccupied: 
+                    await client.send_message(message.chat.id, "The username is not occupied by anyone", reply_to_message_id=message.id)
+                    return
+                try:
+                    await client.copy_message(message.chat.id, msg.chat.id, msg.id, reply_to_message_id=message.id)
+                except:
+                    try:    
+                        await handle_private(client, acc, message, username, msgid)               
+                    except Exception as e:
+                        if ERROR_MESSAGE == True:
+                            await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id)
+
+            # wait time
+            await asyncio.sleep(WAITING_TIME)
+        if LOGIN_SYSTEM == True:
+            try:
+                await acc.disconnect()
+            except:
+                pass                				
+        batch_temp.IS_BATCH[message.from_user.id] = True
+
+
+# handle private
+async def handle_private(client: Client, acc, message: Message, chatid: int, msgid: int):
+    msg: Message = await acc.get_messages(chatid, msgid)
+    if msg.empty: return 
+    msg_type = get_message_type(msg)
+    if not msg_type: return 
+    if CHANNEL_ID:
+        try:
+            chat = int(CHANNEL_ID)
+        except:
+            chat = message.chat.id
+    else:
+        chat = message.chat.id
+    if batch_temp.IS_BATCH.get(message.from_user.id): return 
+    if "Text" == msg_type:
+        try:
+            await client.send_message(chat, msg.text, entities=msg.entities, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+            return 
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+            return 
+
+    smsg = await client.send_message(message.chat.id, '**Downloading**', reply_to_message_id=message.id)
+    asyncio.create_task(downstatus(client, f'{message.id}downstatus.txt', smsg, chat))
+    try:
+        file = await acc.download_media(msg, progress=progress, progress_args=[message,"down"])
+        os.remove(f'{message.id}downstatus.txt')
+    except Exception as e:
+        if ERROR_MESSAGE == True:
+            await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML) 
+        return await smsg.delete()
+    if batch_temp.IS_BATCH.get(message.from_user.id): return 
+    asyncio.create_task(upstatus(client, f'{message.id}upstatus.txt', smsg, chat))
+
+    if msg.caption:
+        caption = msg.caption
+    else:
+        caption = None
+    if batch_temp.IS_BATCH.get(message.from_user.id): return 
+            
+    if "Document" == msg_type:
+        try:
+            ph_path = await acc.download_media(msg.document.thumbs[0].file_id)
+        except:
+            ph_path = None
+        
+        try:
+            await client.send_document(chat, file, thumb=ph_path, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[message,"up"])
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        if ph_path != None: os.remove(ph_path)
+        
+
+    elif "Video" == msg_type:
+        try:
+            ph_path = await acc.download_media(msg.video.thumbs[0].file_id)
+        except:
+            ph_path = None
+        
+        try:
+            await client.send_video(chat, file, duration=msg.video.duration, width=msg.video.width, height=msg.video.height, thumb=ph_path, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[message,"up"])
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        if ph_path != None: os.remove(ph_path)
+
+    elif "Animation" == msg_type:
+        try:
+            await client.send_animation(chat, file, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        
+    elif "Sticker" == msg_type:
+        try:
+            await client.send_sticker(chat, file, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)     
+
+    elif "Voice" == msg_type:
+        try:
+            await client.send_voice(chat, file, caption=caption, caption_entities=msg.caption_entities, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[message,"up"])
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+
+    elif "Audio" == msg_type:
+        try:
+            ph_path = await acc.download_media(msg.audio.thumbs[0].file_id)
+        except:
+            ph_path = None
+
+        try:
+            await client.send_audio(chat, file, thumb=ph_path, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[message,"up"])   
+        except Exception as e:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        
+        if ph_path != None: os.remove(ph_path)
+
+    elif "Photo" == msg_type:
+        try:
+            await client.send_photo(chat, file, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+        except:
+            if ERROR_MESSAGE == True:
+                await client.send_message(message.chat.id, f"Error: {e}", reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+    
+    if os.path.exists(f'{message.id}upstatus.txt'): 
+        os.remove(f'{message.id}upstatus.txt')
+        os.remove(file)
+    await client.delete_messages(message.chat.id,[smsg.id])
+
+
+# get the type of message
+def get_message_type(msg: pyrogram.types.messages_and_media.message.Message):
+    try:
+        msg.document.file_id
+        return "Document"
+    except:
+        pass
+
+    try:
+        msg.video.file_id
+        return "Video"
+    except:
+        pass
+
+    try:
+        msg.animation.file_id
+        return "Animation"
+    except:
+        pass
+
+    try:
+        msg.sticker.file_id
+        return "Sticker"
+    except:
+        pass
+
+    try:
+        msg.voice.file_id
+        return "Voice"
+    except:
+        pass
+
+    try:
+        msg.audio.file_id
+        return "Audio"
+    except:
+        pass
+
+    try:
+        msg.photo.file_id
+        return "Photo"
+    except:
+        pass
+
+    try:
+        msg.text
+        return "Text"
+    except:
+        pass
+        
+
+# Don't Remove Credit @VJ_Bots
+# Subscribe YouTube Channel For Amazing Bot @Tech_VJ
+# Ask Doubt on telegram @KingVJ01
  
  
